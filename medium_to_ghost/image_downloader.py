@@ -2,6 +2,20 @@ import logging
 import urllib.request
 from urllib.error import HTTPError
 from pathlib import Path
+import imghdr
+
+
+def get_file_with_extension(local_destination: Path):
+    """
+    Tests a downloaded image for its file extension & returns a corrected one.
+    :param local_destination: The local path of the image
+    """
+    if len(local_destination.suffixes) == 0:
+        local_destination_to_fix = Path(local_destination)
+        image_extension = imghdr.what(local_destination_to_fix)
+        return local_destination_to_fix.with_suffix("." + image_extension)
+    else:
+        return local_destination
 
 
 def download_image_with_local_cache(url: str, cache_folder: Path):
@@ -35,5 +49,10 @@ def download_image_with_local_cache(url: str, cache_folder: Path):
         except HTTPError as e:
             logging.error(f"Download failed for {local_destination}. Error Message: {e.msg}")
 
-    return local_destination
-
+    fixed_filename_at_local_destination = get_file_with_extension(local_destination)
+    if len(local_destination.suffixes) == 0:
+        logging.info(f"Fixed extension of {local_destination.name} to {fixed_filename_at_local_destination.name}.")
+        local_destination.rename(fixed_filename_at_local_destination)
+        return fixed_filename_at_local_destination
+    else:
+        return local_destination
