@@ -80,7 +80,7 @@ def extract_posts_from_zip(medium_zip):
     posts = {}
 
     for filename in medium_zip.namelist():
-        if filename.startswith("posts/"):
+        if filename != "posts/" and filename.startswith("posts/"):
             data = extract_utf8_file_from_zip(medium_zip, filename)
             posts[filename] = data
 
