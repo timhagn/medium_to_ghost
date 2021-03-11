@@ -107,7 +107,6 @@ def convert_medium_post_to_ghost_json(html_filename, post_tuple, user):
                 del data["featured_image"]
                 feature_image = str(new_image_path).replace("exported_content", "")
 
-
     # Create the final post dictionary as required by Ghost 2.0
     return {
         "id": post_index,

@@ -1,5 +1,7 @@
 import click
 from pathlib import Path
+
+from medium_to_ghost.medium_additional_parser import parse_tags
 from medium_to_ghost.medium_post_parser import convert_medium_post_to_ghost_json
 import time
 import json
@@ -20,10 +22,12 @@ def create_ghost_import_zip():
     shutil.make_archive("medium_export_for_ghost", "zip", "exported_content", logger=logger)
 
 
-def create_export_file(converted_posts):
+def create_export_file(converted_posts, converted_tags, converted_posts_tags):
     """
     Create a Ghost import json from a list of Ghost post documents.
     :param converted_posts: Ghost formatted python docs.
+    :param converted_tags: Ghost formatted tags.
+    :param converted_posts_tags: Ghost formatted posts_tags.
     :return: A Dict representation of a ghost export file you can dump to json.
     """
     return {
@@ -34,7 +38,9 @@ def create_export_file(converted_posts):
                     "version": "2.18.3"
                 },
                 "data": {
-                    "posts": converted_posts
+                    "posts": converted_posts,
+                    "tags": converted_tags,
+                    "posts_tags": converted_posts_tags
                 }
             }
         ]
@@ -83,7 +89,7 @@ def extract_posts_from_zip(medium_zip):
     for post_index, filename in enumerate(medium_zip.namelist()):
         if filename != "posts/" and filename.startswith("posts/"):
             data = extract_utf8_file_from_zip(medium_zip, filename)
-            posts[filename] = (data, post_index)
+            posts[filename] = (data, post_index + 1)
 
     return posts
 
@@ -100,8 +106,8 @@ def main(medium_export_zipfile, user):
                                                                 "w") as output:
             posts = extract_posts_from_zip(medium_zip)
             exported_posts = parse_posts(posts, user)
-            # TODO: parse tags
-            export_data = create_export_file(exported_posts)
+            exported_tags, exported_posts_tags = parse_tags(exported_posts)
+            export_data = create_export_file(exported_posts, exported_tags, exported_posts_tags)
             json.dump(export_data, output, indent=2)
 
         # Put everything in a zip file for Ghost
