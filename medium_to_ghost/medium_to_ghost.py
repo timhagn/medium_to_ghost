@@ -44,14 +44,14 @@ def create_export_file(converted_posts):
 def parse_posts(posts, user):
     """
     Parse a list of Medium HTML posts
-    :param posts: List of medium posts as dict with filename: html_content
+    :param posts: List of medium posts as dict with filename: (html_content, post_index)
     :param user: ID of user
     :return: Ghost versions of those same posts
     """
     converted_posts = []
 
-    for name, content in posts.items():
-        converted_post = convert_medium_post_to_ghost_json(name, content, user)
+    for name, post_tuple in posts.items():
+        converted_post = convert_medium_post_to_ghost_json(name, post_tuple, user)
         if converted_post is not None:
             converted_posts.append(converted_post)
 
@@ -76,14 +76,14 @@ def extract_posts_from_zip(medium_zip):
     """
     Extract all Medium posts from the Medium export Zip file as utf-8 strings
     :param medium_zip: zip file from Medium
-    :return: list of posts as a dict with filename: data
+    :return: list of posts as a dict with filename: (data, post_index)
     """
     posts = {}
 
-    for filename in medium_zip.namelist():
+    for post_index, filename in enumerate(medium_zip.namelist()):
         if filename != "posts/" and filename.startswith("posts/"):
             data = extract_utf8_file_from_zip(medium_zip, filename)
-            posts[filename] = data
+            posts[filename] = (data, post_index)
 
     return posts
 
@@ -100,6 +100,7 @@ def main(medium_export_zipfile, user):
                                                                 "w") as output:
             posts = extract_posts_from_zip(medium_zip)
             exported_posts = parse_posts(posts, user)
+            # TODO: parse tags
             export_data = create_export_file(exported_posts)
             json.dump(export_data, output, indent=2)
 

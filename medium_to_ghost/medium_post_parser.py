@@ -24,11 +24,11 @@ def parse_medium_filename(filename):
     return uuid, slug, date, status
 
 
-def convert_medium_post_to_ghost_json(html_filename, post_html_content, user):
+def convert_medium_post_to_ghost_json(html_filename, post_tuple, user):
     """
     Convert a Medium HTML export file's content into a Mobiledoc document.
     :param html_filename: The original filename from Medium (needed to grab publish state)
-    :param post_html_content: The html body (string) of the post itself
+    :param post_tuple: Tuple with the html body (string) of the post itself & a post_index.
     :param user: ID of user to set posts to
     :return: Python dictionary representing a Mobiledoc version of this post
     """
@@ -37,6 +37,9 @@ def convert_medium_post_to_ghost_json(html_filename, post_html_content, user):
     # Get the publish date and slug from the exported filename
     _, filename = html_filename.split("/")
     uuid, slug, date, status = parse_medium_filename(filename)
+
+    post_html_content = post_tuple[0]
+    post_index = post_tuple[1]
 
     # Extract post-level metadata elements that will be at known elements
     soup = BeautifulSoup(post_html_content, 'html.parser')
@@ -107,7 +110,7 @@ def convert_medium_post_to_ghost_json(html_filename, post_html_content, user):
 
     # Create the final post dictionary as required by Ghost 2.0
     return {
-        # "id": id,
+        "id": post_index,
         "uuid": uuid,
         "title": title,
         "slug": slug,
