@@ -106,7 +106,8 @@ def main(medium_export_zipfile, user, highest_post_id, highest_tag_id):
     export_folder = Path("exported_content")
     if Path(medium_export_zipfile).exists():
         export_folder.mkdir(parents=True, exist_ok=True)
-
+        # TODO: instead of highest_post_id & highest_tag_id, cache tags & read them from JSON or such
+        #       also perhaps read users from user import file & add them to individual exports...
         with ZipFile(medium_export_zipfile) as medium_zip, open(export_folder / "medium_export_for_ghost.json",
                                                                 "w") as output:
             posts = extract_posts_from_zip(medium_zip, highest_post_id)
