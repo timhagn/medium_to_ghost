@@ -8,12 +8,12 @@ with open('README.rst') as readme_file:
 
 requirements = [
     'beautifulsoup4',
-    'Click>=6.0'
+    'Click>=7.0'
 ]
 
 setup(
     name='medium_to_ghost',
-    version='0.0.5',
+    version='0.0.6',
     description="Convert a Medium blog export file to Ghost 2.0 format (including images)",
     long_description=readme,
     packages=['medium_to_ghost'],

@@ -41,7 +41,7 @@ def create_export_file(converted_posts):
     }
 
 
-def parse_posts(posts):
+def parse_posts(posts, user):
     """
     Parse a list of Medium HTML posts
     :param posts: List of medium posts as dict with filename: html_content
@@ -50,7 +50,7 @@ def parse_posts(posts):
     converted_posts = []
 
     for name, content in posts.items():
-        converted_post = convert_medium_post_to_ghost_json(name, content)
+        converted_post = convert_medium_post_to_ghost_json(name, content, user)
         if converted_post is not None:
             converted_posts.append(converted_post)
 
@@ -86,14 +86,17 @@ def extract_posts_from_zip(medium_zip):
 
     return posts
 
+
 @click.command()
+@click.option('-u', '--user', default=1, help='ID of user to set posts to.')
 @click.argument('medium_export_zipfile')
-def main(medium_export_zipfile):
+def main(medium_export_zipfile, user):
     export_folder = Path("exported_content")
     if Path(medium_export_zipfile).exists():
         export_folder.mkdir(parents=True, exist_ok=True)
 
-        with ZipFile(medium_export_zipfile) as medium_zip, open(export_folder / "medium_export_for_ghost.json", "w") as output:
+        with ZipFile(medium_export_zipfile) as medium_zip, open(export_folder / "medium_export_for_ghost.json",
+                                                                "w") as output:
             posts = extract_posts_from_zip(medium_zip)
             exported_posts = parse_posts(posts)
             export_data = create_export_file(exported_posts)

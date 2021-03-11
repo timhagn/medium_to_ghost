@@ -24,11 +24,12 @@ def parse_medium_filename(filename):
     return uuid, slug, date, status
 
 
-def convert_medium_post_to_ghost_json(html_filename, post_html_content):
+def convert_medium_post_to_ghost_json(html_filename, post_html_content, user):
     """
     Convert a Medium HTML export file's content into a Mobiledoc document.
     :param html_filename: The original filename from Medium (needed to grab publish state)
     :param post_html_content: The html body (string) of the post itself
+    :param user: ID of user to set posts to
     :return: Python dictionary representing a Mobiledoc version of this post
     """
     logging.info(f"Parsing {html_filename}")
@@ -123,13 +124,13 @@ def convert_medium_post_to_ghost_json(html_filename, post_html_content):
         "visibility": "public",
         "meta_title": None,
         "meta_description": None,
-        "author_id": "1",
+        "author_id": user,
         "created_at": created_at,
-        "created_by": "1",
+        "created_by": user,
         "updated_at": updated_at,
-        "updated_by":  "1",
+        "updated_by":  user,
         "published_at": published_at,
-        "published_by": "1",
+        "published_by": user,
         "custom_excerpt": custom_excerpt,
         "codeinjection_head": None,
         "codeinjection_foot": None,
