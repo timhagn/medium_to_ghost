@@ -6,24 +6,24 @@ import re
 from medium_to_ghost.mtg_utils import download_with_local_cache
 
 
-def parse_tags(exported_posts, highest_tag_id):
+def parse_tags(exported_posts, existing_tags):
     """
     Parse a list of exported posts' canonical urls for Tags
     :param exported_posts: List of parsed Ghost posts.
-    :param highest_tag_id: List of parsed Ghost posts.
-    :return: Ghost versions of all tags & all post tags.
+    :param existing_tags: Already loaded tags or empty.
+    :return: Ghost versions of all tags & all post tags + all_tags combined.
     """
     all_posts_tags = []
-    all_tags = []
+    all_tags = existing_tags
 
     for post in exported_posts:
         if post["canonical_url"] is not None:
-            post_tags = parse_tags_from_canonical_url(post["canonical_url"], post["id"], all_tags, highest_tag_id)
+            post_tags = parse_tags_from_canonical_url(post["canonical_url"], post["id"], all_tags)
             if post_tags is not None:
                 all_posts_tags.extend(post_tags)
 
-    converted_tags = convert_all_tags(all_tags, highest_tag_id)
-    return converted_tags, all_posts_tags
+    converted_tags = convert_all_tags(all_tags)
+    return converted_tags, all_posts_tags, all_tags
 
 
 def post_filename_creator(uri):
@@ -33,13 +33,12 @@ def post_filename_creator(uri):
     return slug
 
 
-def parse_tags_from_canonical_url(canonical_url, post_id, all_tags, highest_tag_id):
+def parse_tags_from_canonical_url(canonical_url, post_id, all_tags):
     """
     Parse a canonical_url for Tags.
     :param canonical_url: Canonical URL of medium post.
     :param post_id: ID of POST as created.
     :param all_tags: List of all currently available tags.
-    :param highest_tag_id:
     :return: Ghost versions of all tags & all post tags.
     """
     post_tags = []
@@ -57,7 +56,7 @@ def parse_tags_from_canonical_url(canonical_url, post_id, all_tags, highest_tag_
             if anchor.contents[0] not in all_tags:
                 all_tags.append(anchor.contents[0])
             post_tag = {
-                "tag_id": all_tags.index(anchor.contents[0]) + highest_tag_id,
+                "tag_id": all_tags.index(anchor.contents[0]),
                 "post_id": post_id
             }
             post_tags.append(post_tag)
@@ -65,18 +64,17 @@ def parse_tags_from_canonical_url(canonical_url, post_id, all_tags, highest_tag_
     return post_tags
 
 
-def convert_all_tags(all_tags, highest_tag_id):
+def convert_all_tags(all_tags):
     """
     Converts all_tags to Ghost format.
     :param all_tags: List of all currently available tags.
-    :param highest_tag_id: .
     :return: Ghost versions of all_tags
     """
     converted_tags = []
     
     for tag_id, tag_name in enumerate(all_tags):
         ghost_tag = {
-            "id":           tag_id + highest_tag_id,
+            "id":           tag_id,
             "name":         tag_name,
             "description":  ""
         }
