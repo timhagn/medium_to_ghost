@@ -1,8 +1,10 @@
 import logging
+import time
 from pathlib import Path
 from bs4 import BeautifulSoup
 import re
 
+from medium_to_ghost.image_downloader import download_image_with_local_cache
 from medium_to_ghost.mtg_utils import download_with_local_cache
 
 
@@ -71,13 +73,79 @@ def convert_all_tags(all_tags):
     :return: Ghost versions of all_tags
     """
     converted_tags = []
-    
+
     for tag_id, tag_name in enumerate(all_tags, start=1):
         ghost_tag = {
-            "id":           tag_id,
-            "name":         tag_name,
-            "description":  ""
+            "id": tag_id,
+            "name": tag_name,
+            "description": ""
         }
         converted_tags.append(ghost_tag)
-    
+
     return converted_tags
+
+
+def parse_user(raw_profile, user_id):
+    """
+    Parse the exported profile page for user infos.
+    :param raw_profile: HTML content of profile page.
+    :param user_id: ID of User as given on CLI.
+    :return: Ghost versions of all tags & all post tags.
+    """
+    logging.info(f"Parsing profile.html as user ID {user_id}")
+
+    # Parse profile.html contents.
+    soup = BeautifulSoup(raw_profile, 'html.parser')
+
+    # Extract name from h3 tag.
+    p_name = soup.find('h3', {'class': "p-name"})
+    name = p_name.contents[0]
+
+    # Extract user image.
+    u_photo = soup.find('img', {'class': "u-photo"})
+    img_url = u_photo.attrs["src"]
+    cache_folder = Path("exported_content") / "downloaded_images"
+    profile_image_fixed = download_image_with_local_cache(img_url, cache_folder)
+    profile_image = profile_image_fixed.as_posix().replace("exported_content", "")
+
+    email = ""
+    facebook = ""
+    created_at = int(time.time())
+    updated_at = int(time.time())
+
+    account_info_list = u_photo.nextSibling.nextSibling
+    for list_item in account_info_list.contents:
+        if 'Email' in list_item.text:
+            email = list_item.contents[1].strip()
+        elif 'Facebook' in list_item.text:
+            facebook = list_item.contents[1].strip()
+
+    # Extract Twitter handle.
+    twitter = ""
+    twitter_anchor = soup.find('a', {'href': re.compile("twitter")})
+    if twitter_anchor is not None:
+        twitter = twitter_anchor.contents[0]
+
+    ghost_user = {
+        "id": user_id,
+        "name": name,
+        "email": email,
+        "profile_image": profile_image,
+        "facebook": facebook,
+        "twitter": twitter,
+        "website": "",
+        "cover_image": None,
+        "bio": None,
+        "accessibility": None,
+        "location": None,
+        "locale": None,
+        "meta_title": None,
+        "meta_description": None,
+        "status": "active",
+        "visibility": "public",
+        "created_at": created_at,
+        "created_by": 1,
+        "updated_at": updated_at,
+        "updated_by": 1
+    }
+    return ghost_user

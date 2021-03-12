@@ -1,7 +1,7 @@
 import click
 from pathlib import Path
 
-from medium_to_ghost.medium_additional_parser import parse_tags
+from medium_to_ghost.medium_additional_parser import parse_tags, parse_user
 from medium_to_ghost.medium_post_parser import convert_medium_post_to_ghost_json
 import time
 import json
@@ -22,10 +22,11 @@ def create_ghost_import_zip():
     shutil.make_archive("medium_export_for_ghost", "zip", "exported_content", logger=logger)
 
 
-def create_export_file(converted_posts, converted_tags, converted_posts_tags):
+def create_export_file(converted_user, converted_posts, converted_tags, converted_posts_tags):
     """
     Create a Ghost import json from a list of Ghost post documents.
-    :param converted_posts: Ghost formatted python docs.
+    :param converted_user: User in Ghost format.
+    :param converted_posts: Posts in Ghost format.
     :param converted_tags: Ghost formatted tags.
     :param converted_posts_tags: Ghost formatted posts_tags.
     :return: A Dict representation of a ghost export file you can dump to json.
@@ -38,6 +39,7 @@ def create_export_file(converted_posts, converted_tags, converted_posts_tags):
                     "version": "2.18.3"
                 },
                 "data": {
+                    "users": [converted_user],
                     "posts": converted_posts,
                     "tags": converted_tags,
                     "posts_tags": converted_posts_tags
@@ -47,22 +49,24 @@ def create_export_file(converted_posts, converted_tags, converted_posts_tags):
     }
 
 
-def update_or_create_export_file(json_output, converted_posts, converted_tags, converted_posts_tags):
+def update_or_create_export_file(json_output, converted_user, converted_posts, converted_tags, converted_posts_tags):
     """
     Updates the existing Ghost import JSON, or falls back to create a new one.
-    :param json_output: Ghost formatted python docs.
-    :param converted_posts: Ghost formatted python docs.
+    :param json_output: Current Ghost JSON output or empty dict.
+    :param converted_user: User in Ghost format.
+    :param converted_posts: Posts in Ghost format.
     :param converted_tags: Ghost formatted tags.
     :param converted_posts_tags: Ghost formatted posts_tags.
     :return: A Dict representation of a ghost export file you can dump to json.
     """
     if "db" in json_output:
+        json_output["db"][0]["data"]["users"].extend([converted_user])
         json_output["db"][0]["data"]["posts"].extend(converted_posts)
         json_output["db"][0]["data"]["tags"] = converted_tags
         json_output["db"][0]["data"]["posts_tags"].extend(converted_posts_tags)
     else:
         logger.info(f"Export file not JSON compatible, creating new one!")
-        return create_export_file(converted_posts, converted_tags, converted_posts_tags)
+        return create_export_file(converted_user, converted_posts, converted_tags, converted_posts_tags)
     return json_output
 
 
@@ -147,6 +151,7 @@ def main(medium_export_zipfile, user, append):
         with ZipFile(medium_export_zipfile) as medium_zip, open(export_output, "w") as output:
             # TODO: First extract the profile & parse the user.
             raw_profile = extract_utf8_file_from_zip(medium_zip, 'profile/profile.html')
+            exported_user = parse_user(raw_profile, user)
 
             # Next extract posts.
             posts, post_index = extract_posts_from_zip(medium_zip, highest_post_id)
@@ -156,7 +161,8 @@ def main(medium_export_zipfile, user, append):
             exported_tags, exported_posts_tags, all_tags = parse_tags(exported_posts, existing_tags)
 
             # Finally create or append export file.
-            export_data = update_or_create_export_file(json_output, exported_posts, exported_tags, exported_posts_tags)
+            export_data = update_or_create_export_file(json_output, exported_user, exported_posts, exported_tags,
+                                                       exported_posts_tags)
             json.dump(export_data, output, indent=2)
 
             config_data = {
