@@ -45,11 +45,13 @@ class TestMediumPostParser(unittest.TestCase):
         doc = Path(os.path.join(os.path.dirname(__file__), 'test_data', 'draft_test-7e48eb14931e.html'))
         html = doc.read_text()
         testuser = 1
+        post_tuple = (html, 0)
+
 
         expected_mobiledoc = Path(os.path.join(os.path.dirname(__file__), 'test_data', 'draft_test_mobiledoc.json'))
         expected_json = expected_mobiledoc.read_text()
 
-        result = medium_post_parser.convert_medium_post_to_ghost_json("posts/draft_test-7e48eb14931e.html", html,
+        result = medium_post_parser.convert_medium_post_to_ghost_json("posts/draft_test-7e48eb14931e.html", post_tuple,
                                                                       testuser)
 
         self.assertEqual(result["uuid"], "7e48eb14931e")

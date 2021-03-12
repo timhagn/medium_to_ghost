@@ -56,7 +56,7 @@ def parse_tags_from_canonical_url(canonical_url, post_id, all_tags):
             if anchor.contents[0] not in all_tags:
                 all_tags.append(anchor.contents[0])
             post_tag = {
-                "tag_id": all_tags.index(anchor.contents[0]),
+                "tag_id": all_tags.index(anchor.contents[0]) + 1,
                 "post_id": post_id
             }
             post_tags.append(post_tag)
@@ -72,7 +72,7 @@ def convert_all_tags(all_tags):
     """
     converted_tags = []
     
-    for tag_id, tag_name in enumerate(all_tags):
+    for tag_id, tag_name in enumerate(all_tags, start=1):
         ghost_tag = {
             "id":           tag_id,
             "name":         tag_name,
