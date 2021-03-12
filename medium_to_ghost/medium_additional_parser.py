@@ -1,8 +1,9 @@
 import logging
+from pathlib import Path
 from bs4 import BeautifulSoup
-import urllib.request
-from urllib.error import HTTPError
 import re
+
+from medium_to_ghost.mtg_utils import download_with_local_cache
 
 
 def parse_tags(exported_posts, highest_tag_id):
@@ -25,6 +26,13 @@ def parse_tags(exported_posts, highest_tag_id):
     return converted_tags, all_posts_tags
 
 
+def post_filename_creator(uri):
+    slug_parts = uri.split("-")
+    slug = "-".join(slug_parts[0:-1])
+    slug += '.html'
+    return slug
+
+
 def parse_tags_from_canonical_url(canonical_url, post_id, all_tags, highest_tag_id):
     """
     Parse a canonical_url for Tags.
@@ -36,17 +44,13 @@ def parse_tags_from_canonical_url(canonical_url, post_id, all_tags, highest_tag_
     """
     post_tags = []
 
-    # Send a User Agent so Medium doesn't return 403
-    opener = urllib.request.build_opener()
-    opener.addheaders = [('User-agent', 'medium_to_ghost post exporter')]
-    urllib.request.install_opener(opener)
-
     logging.info(f"Downloading {canonical_url} and parsing tags.")
 
-    try:
-        response = urllib.request.urlopen(canonical_url)
-        post_content = response.read()
+    cache_folder = Path("exported_content") / "downloaded_posts"
+    local_post_file = download_with_local_cache(canonical_url, cache_folder, post_filename_creator)
 
+    with open(local_post_file) as post_content_wrapper:
+        post_content = post_content_wrapper.read()
         soup = BeautifulSoup(post_content, 'html.parser')
         tagged_anchors = soup.find_all(href=re.compile("tagged"))
         for anchor in tagged_anchors:
@@ -57,8 +61,6 @@ def parse_tags_from_canonical_url(canonical_url, post_id, all_tags, highest_tag_
                 "post_id": post_id
             }
             post_tags.append(post_tag)
-    except HTTPError as e:
-        logging.error(f"Download failed for {canonical_url}. Error Message: {e.msg}")
 
     return post_tags
 

@@ -110,9 +110,17 @@ def main(medium_export_zipfile, user, highest_post_id, highest_tag_id):
         #       also perhaps read users from user import file & add them to individual exports...
         with ZipFile(medium_export_zipfile) as medium_zip, open(export_folder / "medium_export_for_ghost.json",
                                                                 "w") as output:
+            # First extract the profile & parse the user.
+            raw_profile = extract_utf8_file_from_zip(medium_zip, 'profile/profile.html')
+
+            # Next extract posts.
             posts = extract_posts_from_zip(medium_zip, highest_post_id)
             exported_posts = parse_posts(posts, user)
+
+            # Extract tags & align with posts.
             exported_tags, exported_posts_tags = parse_tags(exported_posts, highest_tag_id)
+
+            # Finally create export file.
             export_data = create_export_file(exported_posts, exported_tags, exported_posts_tags)
             json.dump(export_data, output, indent=2)
 
