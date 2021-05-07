@@ -14,12 +14,12 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 logger = logging.getLogger('medium_to_ghost')
 
 
-def create_ghost_import_zip():
+def create_ghost_import_zip(name):
     """
     Zip up exported content in ./exported_content folder. Writes out medium_export_for_ghost.zip to disk.
     :return: None
     """
-    shutil.make_archive("medium_export_for_ghost", "zip", "exported_content", logger=logger)
+    shutil.make_archive("medium_export_for_ghost", "zip", name or "exported_content", logger=logger)
 
 
 def create_export_file(converted_user, converted_posts, converted_tags, converted_posts_tags):
