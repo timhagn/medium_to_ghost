@@ -35,8 +35,8 @@ def create_export_file(converted_user, converted_posts, converted_tags, converte
         "db": [
             {
                 "meta": {
-                    "exported_on": int(time.time()),
-                    "version": "2.18.3"
+                    "exported_on": int(time.time() * 1000),
+                    "version": "4.4.0"
                 },
                 "data": {
                     "users": [converted_user],

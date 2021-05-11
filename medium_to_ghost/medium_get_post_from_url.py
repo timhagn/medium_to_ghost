@@ -38,7 +38,8 @@ def get_feed_for_author(author_username, cache_folder):
 def get_posts_from_medium():
     requested_url = "https://medium.com/solana-labs/turbine-solanas-block-propagation-protocol-solves-the-scalability-trilemma-2ddba46a51db"
     post_author_web = "604b747c3c21e5003b373350"
-    post_author_local = "604b720ccd88dd0001aac471"
+    # post_author_local = "604b720ccd88dd0001aac471"
+    post_author_local = "5951f5fca366002ebd5dbef7"
     post_author = post_author_local
     author_username = "@anatolyyakovenko"
 
@@ -90,8 +91,11 @@ def convert_feed_file(feed_file, user, export_folder):
     # Finally create or append export file.
     export_data = update_or_create_export_file([], [], converted_posts, [], [])
 
-    # TODO: check why the dump is broken!
+    json_string = json.dumps(export_data, indent=2)
+
     json.dump(export_data, output, indent=2)
+
+    output.flush()
 
     # TODO: test what happens at importing...
     # Put everything in a zip file for Ghost
@@ -112,8 +116,8 @@ def convert_feed_item_to_ghost_json(item, user, post_index):
     # Get & convert dates.
     created_date = parse(item.find('pubDate').text)
     updated_date = parse(item.find('updated').text)
-    created_at = published_at = created_date.timestamp()
-    updated_at = updated_date.timestamp()
+    created_at = published_at = int(created_date.timestamp() * 1000)
+    updated_at = int(updated_date.timestamp() * 1000)
 
     # Get encoded content.
     encoded_content = item.find('content').text
@@ -169,9 +173,10 @@ def convert_feed_item_to_ghost_json(item, user, post_index):
         "uuid": uuid,
         "title": title,
         "slug": slug,
+        "type": "post",
         "canonical_url": canonical_url,
         "mobiledoc": json.dumps(mobiledoc_post),
-        "html": encoded_content,
+        # "html": encoded_content,
         "comment_id": comment_id,
         "plaintext": plain_text,
         "feature_image": feature_image,
@@ -189,7 +194,7 @@ def convert_feed_item_to_ghost_json(item, user, post_index):
         "updated_by": user,
         "published_at": published_at,
         "published_by": user,
-        # "custom_excerpt": custom_excerpt,
+        "custom_excerpt": None,  # custom_excerpt,
         "codeinjection_head": None,
         "codeinjection_foot": None,
         "custom_template": None,
